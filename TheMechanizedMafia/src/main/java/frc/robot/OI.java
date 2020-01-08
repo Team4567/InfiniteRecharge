@@ -59,7 +59,7 @@ public class OI {
 
         // SmartDashboard Buttons
         SmartDashboard.putData("Autonomous Command", new AutonomousCommand());
-        SmartDashboard.putData("StraightTo", new StraightTo());
+        SmartDashboard.putData("StraightTo", new StraightTo(0));
         SmartDashboard.putData("TurnTo: Zero", new TurnTo(0));
         SmartDashboard.putData("TurnTo: Right90", new TurnTo(90));
         SmartDashboard.putData("TurnTo: Left90", new TurnTo(-90));
