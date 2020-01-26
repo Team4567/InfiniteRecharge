@@ -7,10 +7,15 @@
 
 package frc.robot;
 
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.GenericHID;
+
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ExampleSubsystem;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import frc.robot.subsystems.*;
 import edu.wpi.first.wpilibj2.command.Command;
 
 /**
@@ -21,20 +26,47 @@ import edu.wpi.first.wpilibj2.command.Command;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
+  public final DrivetrainTalon drive;
+  public final OneWheelShooter shoot;
+  public final ControlPanel control;
 
-  private final ExampleCommand m_autoCommand = new ExampleCommand(m_exampleSubsystem);
-
-
-
+  private final Command m_autoCommand = null;   
+  
+  public final DigitalInput limit;
+  NetworkTableInstance inst;
+  NetworkTable table;
+  NetworkTableEntry tx, ty, targetVisible;
+  
+  double angleLimelight = 0;
+  double heightLimelight = 0;
+  double heightTarget = 0;
   /**
    * The container for the robot.  Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
+    drive = new DrivetrainTalon();
+    limit = new DigitalInput(0);
+    shoot = new OneWheelShooter();
+    control = new ControlPanel();
+    
+    inst = NetworkTableInstance.getDefault();
+    table = inst.getTable("limelight");
+    tx = table.getEntry("tx");
+    ty = table.getEntry("ty");
+    targetVisible = table.getEntry("target");
+
+
     // Configure the button bindings
     configureButtonBindings();
   }
 
+  public double getDistanceToTarget(){
+      return targetVisible.getBoolean( false ) ? ( heightTarget - heightLimelight ) / Math.tan( angleLimelight + ty.getDouble( 0 ) ) : 0;
+  }
+
+  public double getAngleToTarget(){
+      return targetVisible.getBoolean( false ) ? tx.getDouble( 0 ) : 0;
+  }
   /**
    * Use this method to define your button->command mappings.  Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
