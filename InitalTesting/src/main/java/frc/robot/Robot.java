@@ -28,11 +28,10 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
-  private XboxController xbox = new XboxController(0);
+  //private XboxController xbox = new XboxController(0);
   private RobotContainer robot;
-  private NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  private NetworkTable table = inst.getTable( "Table" );
-  private NetworkTableEntry rpm = table.getEntry("RPM");
+  //private NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -43,8 +42,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     robot = new RobotContainer();
-    rpm.setDouble(8000);
-
+    
   }
 
   /**
@@ -110,13 +108,13 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    robot.drive.drive( xbox.getY( Hand.kLeft ), -xbox.getX( Hand.kLeft ) );
+   // robot.drive.drive( xbox.getY( Hand.kLeft ), -xbox.getX( Hand.kLeft ) );
     
-    if( xbox.getAButton() ){
-      robot.shoot.RPMDrive( rpm.getDouble(0) );
-    }else{
-      robot.shoot.talon.set( ControlMode.PercentOutput, xbox.getTriggerAxis( Hand.kLeft ) );
-    }
+    //if( xbox.getAButton() ){
+    //  robot.shoot.RPMDrive( rpm.getDouble(0) );
+    //}else{
+    //  robot.shoot.talon.set( ControlMode.PercentOutput, xbox.getTriggerAxis( Hand.kLeft ) );
+    //}
   
   }
 

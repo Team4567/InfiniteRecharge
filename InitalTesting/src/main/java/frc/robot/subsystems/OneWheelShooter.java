@@ -7,10 +7,13 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,12 +24,15 @@ public class OneWheelShooter extends SubsystemBase {
   /**
    * Creates a new TestSystem.
    */
+  // kP = 0.3, RPM = 8000
   public TalonSRX talon;
 
   public OneWheelShooter() {
     talon = new TalonSRX( Constants.kCANTestTalon );
+    talon.configFactoryDefault();
     talon.configSelectedFeedbackSensor( FeedbackDevice.CTRE_MagEncoder_Relative );
-    talon.setSensorPhase(true);
+    talon.setSensorPhase( true );
+    talon.setNeutralMode( NeutralMode.Coast );
     setRPMPID( Constants.kGains_RPMShtr );
   }
 
@@ -45,11 +51,22 @@ public class OneWheelShooter extends SubsystemBase {
   public void RPMDrive( double RPM ){
     talon.set( ControlMode.Velocity, ((RPM*4096)/60)/10 );
   }
+  
+  public void RPMDrive( DoubleSupplier supply ){
+    RPMDrive( supply.getAsDouble() );
+  }
+
+  public void shootingVelocity(){
+    RPMDrive(8000);
+  }
+
+  public void stop(){
+    talon.set( ControlMode.PercentOutput, 0 );
+  }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     SmartDashboard.putNumber( "RPM", ( talon.getSelectedSensorVelocity() / 4096 ) * 600 );
-    
   }
 }

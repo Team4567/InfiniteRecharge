@@ -34,24 +34,6 @@ public final class Constants {
 	public static final int kPCMLGearboxOut = 1;
 	public static final int kPCMRGearboxIn = 2;
 	public static final int kPCMRGearboxOut = 3;
-
-    /**
-	 * Number of joystick buttons to poll.
-	 * 10 means buttons[1,9] are polled, which is actually 9 buttons.
-	 */
-	public final static int kNumButtonsPlusOne = 10;
-	
-	/**
-	 * How many sensor units per rotation.
-	 * Using Integrated FalconFX Encoder
-	 * @link https://github.com/CrossTheRoadElec/Phoenix-Documentation#what-are-the-units-of-my-sensor
-	 */
-	public final static int kSensorUnitsPerRotation = 2048;
-	
-	/**
-	 * Number of rotations to drive when performing Distance Closed Loop
-	 */
-	public final static double kRotationsToTravel = 6;
 	
 	/**
 	 * This is a property of the Pigeon IMU, and should not be changed.

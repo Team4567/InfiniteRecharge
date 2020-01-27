@@ -9,6 +9,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -18,6 +19,9 @@ import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import com.ctre.phoenix.motorcontrol.StatusFrame;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
+
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.DemandType;
@@ -30,34 +34,36 @@ import frc.robot.Constants;
 
 public class Drivetrain extends SubsystemBase {
   /**
-   * Creates a new Drivetrain.
-   */
-  public enum Gear{
-	  HighGear,LowGear
+	 * Defines the gear of the dual-speed gearbox
+	 */
+  public static enum Gear{
+	  HighGear,
+	  LowGear
   }
   // double : 1
-  final double lowGearRatio  = 1;
-  final double highGearRatio = 2.83;
+  final double lowGearRatio  = 15.32;
+  final double highGearRatio = 7.08;
   final double cpr = 2048;
   final double wheelCirc = 6*Math.PI;
   public double inchesToUnits = 1;
   public TalonFX leftMaster, leftSlave, rightMaster, rightSlave;
   public PigeonIMU imu;
-  private Compressor compressor;
   public DoubleSolenoid gearShiftL, gearShiftR;
   public Gear gear, prevGear;
   /** Tracking variables */
 	double targetAngle = 0;
 	  double[] ypr;
 	  double prevY = 0;
+	/**
+   * Creates a new Drivetrain.
+   */
 	public Drivetrain() {
-
     	leftMaster = new TalonFX( Constants.kCANLMaster );
     	leftSlave = new TalonFX( Constants.kCANLSlave );
     	rightMaster = new TalonFX( Constants.kCANRMaster );
 		rightSlave = new TalonFX( Constants.kCANRSlave );
 	
-		imu = new PigeonIMU( Constants.kCANIMU);
+		imu = new PigeonIMU( Constants.kCANIMU );
 
 		gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
 		gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );
@@ -196,6 +202,7 @@ public class Drivetrain extends SubsystemBase {
 
 		/* Initialize */
 		rightMaster.setStatusFramePeriod( StatusFrameEnhanced.Status_10_Targets, 10 );
+		
 		zeroSensors();
 		
   }
@@ -221,6 +228,15 @@ public class Drivetrain extends SubsystemBase {
   public Gear getGear(){
 	  return gear;
   }
+  public String getGearString(){
+	  if( gear == Gear.HighGear ){
+		return "High";
+	  }else if( gear == Gear.LowGear ){
+		return "Low";
+	  }else{
+		  return "N/A";
+	  }
+  }
 
   @Override
   public void periodic() {
@@ -229,20 +245,21 @@ public class Drivetrain extends SubsystemBase {
 			inchesToUnits = cpr * lowGearRatio / wheelCirc;
 			gearShiftL.set( DoubleSolenoid.Value.kForward );
 			gearShiftR.set( DoubleSolenoid.Value.kForward );
-	  	}else if( gear == Gear.HighGear ){
+	  }else if( gear == Gear.HighGear ){
 			inchesToUnits = cpr * highGearRatio / wheelCirc;
 			gearShiftL.set( DoubleSolenoid.Value.kReverse );
 			gearShiftR.set( DoubleSolenoid.Value.kReverse );
-	  	}
+		}
 	}
+      SmartDashboard.putString( "Gear", getGearString() );
 	  imu.getYawPitchRoll( ypr );
     // This method will be called once per scheduler run
   }
 
   public void drive( double y, double x ){
 	
-	y = Math.max( -1, Math.min( y, 1 ) );
-	y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
+		y = Math.max( -1, Math.min( y, 1 ) );
+		y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
     x = Math.max( -1, Math.min( x, 1 ) );
     
 
@@ -282,6 +299,10 @@ public class Drivetrain extends SubsystemBase {
 	rightSlave.follow( rightMaster );
   }
   
+  public void drive( DoubleSupplier y, DoubleSupplier x ){
+	drive( y.getAsDouble(), x.getAsDouble() );
+  }
+
   /** Zero all sensors, both Talons and Pigeon */
 	void zeroSensors() {
 		leftMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
