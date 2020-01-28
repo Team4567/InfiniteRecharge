@@ -8,20 +8,29 @@
 package frc.robot;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.GenericHID;
 
 import edu.wpi.first.wpilibj.XboxController;
-
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import frc.robot.commands.AlignToTarget;
 import frc.robot.commands.DriveStraight;
+import frc.robot.commands.Target;
 import frc.robot.subsystems.*;
+import frc.robot.commands.*;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 
 /**
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -35,6 +44,7 @@ public class RobotContainer {
   public final OneWheelShooter shoot;
   public final ControlPanel control;
 
+  public final Compressor compressor;
   private Command m_autoCommand = null;   
 
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -48,6 +58,8 @@ public class RobotContainer {
   // Center of target
   double heightTarget = 89.75;
   
+
+  SendableChooser<CommandGroupBase> chooser;
   /**
    * The container for the robot.  Contains subsystems, OI devices, and commands.
    */
@@ -55,6 +67,9 @@ public class RobotContainer {
     drive = new Drivetrain();
     shoot = new OneWheelShooter();
     control = new ControlPanel();
+    compressor = new Compressor( Constants.kCANPCMA );
+    compressor.setClosedLoopControl(true);
+    compressor.start();
 
     limelight = inst.getTable("limelight");
     tx = limelight.getEntry("tx");
@@ -67,6 +82,15 @@ public class RobotContainer {
     rpm.setDouble(8000);
 
     //m_autoCommand = new DriveStraight( drive, 120 );
+
+    chooser = new SendableChooser<CommandGroupBase>();
+    chooser.setDefaultOption("Auto A", new Target(0, 0, drive));
+    chooser.addOption("Auto B", new Target(0, 0, drive));
+    chooser.addOption("Auto C", new Target(0, 0, drive));
+    chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0 ), new DriveStraight( drive, 0 ) ) );
+    SmartDashboard.putData( "Auto Command", chooser );
+    
+
 
     // Configure the button bindings
     configureButtonBindings();
@@ -87,6 +111,8 @@ public class RobotContainer {
   public double getAngleToTarget(){
       return haveTarget() ? tx.getDouble( 0 ) : 0;
   }
+
+  
   /**
    * Use this method to define your button->command mappings.  Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
@@ -96,17 +122,20 @@ public class RobotContainer {
   private void configureButtonBindings() {
       drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
       
-      controller.aButton.whenPressed( new InstantCommand( () -> shoot.RPMDrive( 8000 ), shoot  ) )
-        .whenReleased( new InstantCommand( shoot::stop, shoot  ) );
-      controller.bButton.whenPressed( new AlignToTarget() );
+      controller.aButton.whenPressed( new RunCommand( () -> shoot.RPMDrive( 8000 ), shoot  ) )
+        .whenReleased( new InstantCommand( shoot::stop, shoot ) );
+      controller.bButton.whenPressed( haveTarget() 
+        ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
+        : new PrintCommand("No Target!") );
 
       controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
       controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
       
-      
+      controller.startButton.whenPressed( new RunCommand( control::setToColor, control ) )
+        .whenReleased( new InstantCommand( control::stop, control ) );
   }
 
-
+  
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -114,6 +143,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
-    return m_autoCommand;
+    return chooser.getSelected();
   }
 }

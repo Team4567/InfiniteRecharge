@@ -28,7 +28,7 @@ public class OneWheelShooter extends SubsystemBase {
   public TalonSRX talon;
 
   public OneWheelShooter() {
-    talon = new TalonSRX( Constants.kCANTestTalon );
+    talon = new TalonSRX( Constants.kCANTalonOneWheel );
     talon.configFactoryDefault();
     talon.configSelectedFeedbackSensor( FeedbackDevice.CTRE_MagEncoder_Relative );
     talon.setSensorPhase( true );

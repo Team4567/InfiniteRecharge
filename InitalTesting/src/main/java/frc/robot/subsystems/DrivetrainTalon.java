@@ -42,14 +42,13 @@ public class DrivetrainTalon extends SubsystemBase {
   public double inchesToUnits = 4096 / wheelCirc;
   public TalonSRX leftMaster, leftSlave, rightMaster, rightSlave;
   public PigeonIMU imu;
-  public Compressor compressor;
   
   /** Tracking variables */
 	boolean firstCall = false;
 	boolean state = false;
   /** Tracking variables */
 	double targetAngle = 0;
-	  double[] ypr;
+	  double[] ypr = {};
 	  double prevY = 0;
   public DrivetrainTalon() {
     leftMaster = new TalonSRX(Constants.kCANLMaster);

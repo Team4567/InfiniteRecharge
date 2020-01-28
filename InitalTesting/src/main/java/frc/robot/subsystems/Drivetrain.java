@@ -52,7 +52,7 @@ public class Drivetrain extends SubsystemBase {
   public Gear gear, prevGear;
   /** Tracking variables */
 	double targetAngle = 0;
-	  double[] ypr;
+	  double[] ypr = {};
 	  double prevY = 0;
 	/**
    * Creates a new Drivetrain.

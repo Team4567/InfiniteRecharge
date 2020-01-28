@@ -8,23 +8,30 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.subsystems.Drivetrain;
 
 public class AlignToTarget extends CommandBase {
   /**
    * Creates a new AlignToTarget.
    */
-  public AlignToTarget() {
+  double angle, distance;
+  public AlignToTarget( double ang, double dist, Drivetrain drive ) {
+    angle = ang;
+    distance = dist;
+    addRequirements(drive);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    
   }
 
   // Called once the command ends or is interrupted.

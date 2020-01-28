@@ -24,10 +24,11 @@ public final class Constants {
     public static final int kCANRMaster = 4;
     public static final int kCANRSlave = 1;
 
-	public static final int kCANTestTalon = 5;
-	public static final int kCANTestVictorA = 6;
-	public static final int kCANTestVictorB = 7;
-    public static final int kCANIMU = 4;
+	public static final int kCANTalonOneWheel = 5;
+	public static final int kCANVictorControl = -1; 
+
+	public static final int kCANIMU = 4;
+	
 	public static final int kCANPCMA = 5;
 	
 	public static final int kPCMLGearboxIn = 0;
