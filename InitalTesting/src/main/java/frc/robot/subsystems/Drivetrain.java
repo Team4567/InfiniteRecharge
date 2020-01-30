@@ -9,6 +9,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -31,6 +33,7 @@ import com.ctre.phoenix.sensors.PigeonIMU;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Imu;
 
 public class Drivetrain extends SubsystemBase {
   /**
@@ -47,12 +50,13 @@ public class Drivetrain extends SubsystemBase {
   final double wheelCirc = 6*Math.PI;
   public double inchesToUnits = 1;
   public TalonFX leftMaster, leftSlave, rightMaster, rightSlave;
-  public PigeonIMU imu;
+  public Imu imu;
   public DoubleSolenoid gearShiftL, gearShiftR;
   public Gear gear, prevGear;
+  PowerDistributionPanel pdp;
   /** Tracking variables */
 	double targetAngle = 0;
-	  double[] ypr = {};
+	  double[] ypr = {0,0,0};
 	  double prevY = 0;
 	/**
    * Creates a new Drivetrain.
@@ -63,11 +67,12 @@ public class Drivetrain extends SubsystemBase {
     	rightMaster = new TalonFX( Constants.kCANRMaster );
 		rightSlave = new TalonFX( Constants.kCANRSlave );
 	
-		imu = new PigeonIMU( Constants.kCANIMU );
+		imu = new Imu( Constants.kCANIMU );
 
 		gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
 		gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );
 
+		pdp = new PowerDistributionPanel();
     /* Factory Default all hardware to prevent unexpected behavior */
 		rightMaster.configFactoryDefault();
 		rightSlave.configFactoryDefault();
@@ -251,7 +256,9 @@ public class Drivetrain extends SubsystemBase {
 			gearShiftR.set( DoubleSolenoid.Value.kReverse );
 		}
 	}
-      SmartDashboard.putString( "Gear", getGearString() );
+	  SmartDashboard.putString( "Gear", getGearString() );
+	  SmartDashboard.putData( "Gyro", imu );
+	  SmartDashboard.putData( "PDP",pdp );
 	  imu.getYawPitchRoll( ypr );
     // This method will be called once per scheduler run
   }
@@ -265,8 +272,8 @@ public class Drivetrain extends SubsystemBase {
 
     // Square the inputs (while preserving the sign) to increase fine control
     // while permitting full power.
-      y = Math.copySign( y * y, y );
-      x = Math.copySign( x * x, x );
+      //y = Math.copySign( y * y, y );
+      //x = Math.copySign( x * x, x );
 
     double leftMotorOutput;
     double rightMotorOutput;
@@ -297,6 +304,7 @@ public class Drivetrain extends SubsystemBase {
 	leftSlave.follow( leftMaster );
 	rightMaster.set( ControlMode.PercentOutput, rightMotorOutput );
 	rightSlave.follow( rightMaster );
+	prevY = y;
   }
   
   public void drive( DoubleSupplier y, DoubleSupplier x ){

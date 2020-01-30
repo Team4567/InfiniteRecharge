@@ -17,6 +17,9 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import frc.robot.commands.AlignToTarget;
@@ -121,9 +124,11 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
       drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
+      shoot.setDefaultCommand( new RunCommand( () -> shoot.talon.set( ControlMode.PercentOutput, controller.getRightTrigger() ), shoot ) );
+      control.setDefaultCommand( new RunCommand( () -> control.control( controller.getRightStickX() ), control ) );
       
-      controller.aButton.whenPressed( new RunCommand( () -> shoot.RPMDrive( 8000 ), shoot  ) )
-        .whenReleased( new InstantCommand( shoot::stop, shoot ) );
+      controller.aButton.whenHeld( new RunCommand( () -> shoot.RPMDrive( 8000 ), shoot  ) );
+        //.whenReleased( new InstantCommand( shoot::stop, shoot ) );
       controller.bButton.whenPressed( haveTarget() 
         ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
         : new PrintCommand("No Target!") );
@@ -131,8 +136,8 @@ public class RobotContainer {
       controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
       controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
       
-      controller.startButton.whenPressed( new RunCommand( control::setToColor, control ) )
-        .whenReleased( new InstantCommand( control::stop, control ) );
+      controller.startButton.whenHeld( new RunCommand( control::setToColor, control ) );
+        //.whenReleased( new InstantCommand( control::stop, control ) );
   }
 
   

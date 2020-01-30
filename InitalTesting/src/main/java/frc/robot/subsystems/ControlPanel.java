@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.revrobotics.ColorMatch;
 import com.revrobotics.ColorMatchResult;
@@ -40,7 +41,13 @@ public class ControlPanel extends SubsystemBase {
   public ControlPanel() {
     wheel = new VictorSPX( Constants.kCANVictorControl );
 
-    colorSensor = new ColorSensorV3( i2cPort);
+    wheel.configFactoryDefault();
+    wheel.setNeutralMode( NeutralMode.Brake );
+    wheel.setInverted( false );
+    wheel.configPeakOutputForward( +1.0 );
+    wheel.configPeakOutputReverse( -1.0 );
+
+    colorSensor = new ColorSensorV3( i2cPort );
     colorMatcher.addColorMatch( kBlueTarget );
     colorMatcher.addColorMatch( kGreenTarget );
     colorMatcher.addColorMatch( kRedTarget );
@@ -102,7 +109,12 @@ public class ControlPanel extends SubsystemBase {
   }
 
   public char getGameMessage(){
-    return DriverStation.getInstance().getGameSpecificMessage().charAt( 0 );
+    String out = DriverStation.getInstance().getGameSpecificMessage();
+    if( out.length() == 0 ){
+      return 'F';
+    }else{
+      return out.charAt(0);
+    }
   }
 
   public void setToColor( ){

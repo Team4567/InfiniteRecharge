@@ -27,7 +27,7 @@ public final class Constants {
 	public static final int kCANTalonOneWheel = 5;
 	public static final int kCANVictorControl = -1; 
 
-	public static final int kCANIMU = 4;
+	public static final int kCANIMU = 0;
 	
 	public static final int kCANPCMA = 5;
 	
