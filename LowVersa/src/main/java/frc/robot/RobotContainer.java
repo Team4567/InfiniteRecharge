@@ -9,31 +9,21 @@ package frc.robot;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Encoder;
+
 import edu.wpi.first.wpilibj.GenericHID;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
-import frc.robot.commands.AlignToTarget;
-import frc.robot.commands.DriveStraight;
-import frc.robot.commands.Target;
 import frc.robot.subsystems.*;
-import frc.robot.commands.*;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 
 /**
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -44,8 +34,8 @@ import edu.wpi.first.wpilibj2.command.StartEndCommand;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public final Drivetrain drive;
-  public final OneWheelShooter shoot;
-  public final ControlPanel control;
+  public final Intake intake;
+  //public final ControlPanel control;
   public final Misc misc;
 
   public final Compressor compressor;
@@ -69,10 +59,10 @@ public class RobotContainer {
    */
   public RobotContainer() {
     drive = new Drivetrain();
-    shoot = new OneWheelShooter();
-    control = new ControlPanel();
-    compressor = new Compressor( Constants.kCANPCMA );
+    //control = new ControlPanel();
     misc = new Misc();
+    intake = new Intake();
+    compressor = new Compressor( Constants.kCANPCMA );
 
     compressor.setClosedLoopControl(true);
     compressor.start();
@@ -93,11 +83,8 @@ public class RobotContainer {
     //m_autoCommand = new DriveStraight( drive, 120 );
 
     chooser = new SendableChooser<CommandGroupBase>();
-    chooser.setDefaultOption("Auto A", new Target(0, 0, drive));
-    chooser.addOption("Auto B", new Target(0, 0, drive));
-    chooser.addOption("Auto C", new Target(0, 0, drive));
-    chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0 ), new DriveStraight( drive, 0 ) ) );
-    SmartDashboard.putData( "Auto Command", chooser );
+    //chooser.addOption("Test", new SequentialCommandGroup( new TurnAngle( drive, 0 ), new DriveStraight( drive, 0 ) ) );
+    //SmartDashboard.putData( "Auto Command", chooser );
     
 
 
@@ -130,20 +117,24 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
       drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
-      shoot.setDefaultCommand( new RunCommand( () -> shoot.talon.set( ControlMode.PercentOutput, controller.getRightTrigger() ), shoot ) );
-      control.setDefaultCommand( new RunCommand( () -> control.control( controller.getRightStickX() ), control ) );
-      misc.setDefaultCommand( new RunCommand( () -> misc.blinkin.set( blink.getDouble(0) ), misc ));
+      //shoot.setDefaultCommand( new RunCommand( () -> shoot.talon.set( ControlMode.PercentOutput, controller.getRightTrigger() ), shoot ) );
+      //control.setDefaultCommand( new RunCommand( () -> control.control( () -> controller.getRightTrigger() - controller.getLeftTrigger() ), control ) );
+      intake.setDefaultCommand( new RunCommand( () -> intake.control( controller::getRightStickY, () -> controller.getRightTrigger() - controller.getLeftTrigger() ), intake ) );
+      //misc.setDefaultCommand( new RunCommand( () -> misc.lightDefault( () -> targetVisible.getDouble(0) == 1 ), misc ));
+      misc.setDefaultCommand( new RunCommand( () -> misc.blinkin.set( blink.getDouble(0) ), misc ) );
 
-      controller.aButton.whenHeld( new RunCommand( () -> shoot.RPMDrive( -8000 ), shoot  ) );
+      //controller.aButton.whenHeld( new RunCommand( () -> shoot.RPMDrive( -8000 ), shoot  ) );
         //.whenReleased( new InstantCommand( shoot::stop, shoot ) );
-      controller.bButton.whenPressed( haveTarget() 
-        ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
-        : new PrintCommand("No Target!") );
+      //controller.bButton.whenPressed( haveTarget() 
+      //  ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
+      //  : new PrintCommand("No Target!") );
 
       controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
       controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
       
-      controller.startButton.whenHeld( new RunCommand( control::setToColor, control ) );
+      //controller.selectButton.whenHeld( new RunCommand( misc::lightToControl, control ) );
+      
+      //controller.startButton.whenHeld( new RunCommand( control::setToColor, control ) );
         //.whenReleased( new InstantCommand( control::stop, control ) );
   }
 

@@ -10,6 +10,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -33,7 +34,7 @@ import com.ctre.phoenix.sensors.PigeonIMU;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Imu;
+import frc.robot.IMU;
 
 public class Drivetrain extends SubsystemBase {
   /**
@@ -50,10 +51,10 @@ public class Drivetrain extends SubsystemBase {
   final double wheelCirc = 6*Math.PI;
   public double inchesToUnits = 1;
   public TalonFX leftMaster, leftSlave, rightMaster, rightSlave;
-  public Imu imu;
+  public IMU imu;
   public DoubleSolenoid gearShiftL, gearShiftR;
   public Gear gear, prevGear;
-  PowerDistributionPanel pdp;
+  
   /** Tracking variables */
 	double targetAngle = 0;
 	  double[] ypr = {0,0,0};
@@ -67,12 +68,12 @@ public class Drivetrain extends SubsystemBase {
     	rightMaster = new TalonFX( Constants.kCANRMaster );
 		rightSlave = new TalonFX( Constants.kCANRSlave );
 	
-		imu = new Imu( Constants.kCANIMU );
+		imu = new IMU( Constants.kCANIMU );
 
 		gearShiftL = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
 		gearShiftR = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMRGearboxIn, Constants.kPCMRGearboxOut );
 
-		pdp = new PowerDistributionPanel();
+		
     /* Factory Default all hardware to prevent unexpected behavior */
 		rightMaster.configFactoryDefault();
 		rightSlave.configFactoryDefault();
@@ -258,7 +259,7 @@ public class Drivetrain extends SubsystemBase {
 	}
 	  SmartDashboard.putString( "Gear", getGearString() );
 	  SmartDashboard.putData( "Gyro", imu );
-	  SmartDashboard.putData( "PDP",pdp );
+	  
 	  imu.getYawPitchRoll( ypr );
     // This method will be called once per scheduler run
   }
@@ -267,7 +268,7 @@ public class Drivetrain extends SubsystemBase {
 	
 		y = Math.max( -1, Math.min( y, 1 ) );
 		y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
-    x = Math.max( -1, Math.min( x, 1 ) );
+    	x = Math.max( -1, Math.min( x, 1 ) );
     
 
     // Square the inputs (while preserving the sign) to increase fine control

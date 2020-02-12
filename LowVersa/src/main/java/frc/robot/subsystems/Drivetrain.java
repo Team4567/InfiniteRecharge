@@ -9,7 +9,10 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -27,38 +30,50 @@ import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.IMU;
-import frc.robot.subsystems.Drivetrain.Gear;
 
-public class DrivetrainTalon extends SubsystemBase {
+public class Drivetrain extends SubsystemBase {
   /**
-   * Creates a new Drivetrain.
-   */
+	 * Defines the gear of the dual-speed gearbox
+	 */
+  public static enum Gear{
+	  HighGear,
+	  LowGear
+  }
+  // double : 1
+  final double lowGearRatio  = 15.32;
+  final double highGearRatio = 7.08;
+  final double cpr = 2048;
   final double wheelCirc = 6*Math.PI;
-  public double inchesToUnits = 4096 / wheelCirc;
-  public TalonSRX leftMaster, leftSlave, rightMaster, rightSlave;
+  public double inchesToUnits = 1;
+  public TalonFX leftMaster, leftSlave, rightMaster, rightSlave;
   public IMU imu;
+  public DoubleSolenoid gearShift;
+  public Gear gear, prevGear;
   
   /** Tracking variables */
-	boolean firstCall = false;
-	boolean state = false;
-  /** Tracking variables */
 	double targetAngle = 0;
-	  double[] ypr = {};
+	  double[] ypr = {0,0,0};
 	  double prevY = 0;
-  public DrivetrainTalon() {
-    leftMaster = new TalonSRX(Constants.kCANLMaster);
-    leftSlave = new TalonSRX(Constants.kCANLSlave);
-    rightMaster = new TalonSRX(Constants.kCANRMaster);
-	rightSlave = new TalonSRX(Constants.kCANRSlave);
+	/**
+   * Creates a new Drivetrain.
+   */
+	public Drivetrain() {
+    	leftMaster = new TalonFX( Constants.kCANLMaster );
+    	leftSlave = new TalonFX( Constants.kCANLSlave );
+    	rightMaster = new TalonFX( Constants.kCANRMaster );
+		rightSlave = new TalonFX( Constants.kCANRSlave );
 	
-	imu = new IMU( Constants.kCANIMU );
-	
+		imu = new IMU( Constants.kCANIMU );
+
+		gearShift = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
+		
+
+		
     /* Factory Default all hardware to prevent unexpected behavior */
 		rightMaster.configFactoryDefault();
 		rightSlave.configFactoryDefault();
@@ -75,7 +90,7 @@ public class DrivetrainTalon extends SubsystemBase {
 		/** Feedback Sensor Configuration */
 		
 		/* Configure the left Talon's selected sensor as local QuadEncoder */
-		leftMaster.configSelectedFeedbackSensor(	FeedbackDevice.CTRE_MagEncoder_Relative,				// Local Feedback Source
+		leftMaster.configSelectedFeedbackSensor(	TalonFXFeedbackDevice.IntegratedSensor,				// Local Feedback Source
 													Constants.PID_PRIMARY,					// PID Slot for Source [0, 1]
 													Constants.kTimeoutMs );					// Configuration Timeout
 
@@ -193,10 +208,13 @@ public class DrivetrainTalon extends SubsystemBase {
 
 		/* Initialize */
 		rightMaster.setStatusFramePeriod( StatusFrameEnhanced.Status_10_Targets, 10 );
+		
+		setGear( Gear.LowGear );
+
 		zeroSensors();
 		
   }
-
+  
   public double yaw(){
 	return ypr[0] % 360;
   }
@@ -208,25 +226,53 @@ public class DrivetrainTalon extends SubsystemBase {
 	leftSlave.set( ControlMode.PercentOutput, 0 );
   }
 
-
+  /**
+   * @param gear the gear to set
+   */
+  public void setGear( Gear gear ) {
+      prevGear = this.gear;  
+	  this.gear = gear;
+  }
+  public Gear getGear(){
+	  return gear;
+  }
+  public String getGearString(){
+	  if( gear == Gear.HighGear ){
+		return "High";
+	  }else if( gear == Gear.LowGear ){
+		return "Low";
+	  }else{
+		  return "N/A";
+	  }
+  }
 
   @Override
   public void periodic() {
+		if( gear == Gear.LowGear ){
+			inchesToUnits = cpr * lowGearRatio / wheelCirc;
+			gearShift.set( DoubleSolenoid.Value.kForward );
+	  }else if( gear == Gear.HighGear ){
+			inchesToUnits = cpr * highGearRatio / wheelCirc;
+			gearShift.set( DoubleSolenoid.Value.kReverse );
+		}
+	  SmartDashboard.putString( "Gear", getGearString() );
+	  SmartDashboard.putData( "Gyro", imu );
+	  
 	  imu.getYawPitchRoll( ypr );
     // This method will be called once per scheduler run
   }
 
   public void drive( double y, double x ){
 	
-	y = Math.max( -1, Math.min( y, 1 ) );
-	y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
-    x = Math.max( -1, Math.min( x, 1 ) );
+		y = Math.max( -1, Math.min( y, 1 ) );
+		y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
+    	x = Math.max( -1, Math.min( x, 1 ) );
     
 
     // Square the inputs (while preserving the sign) to increase fine control
     // while permitting full power.
-    y = Math.copySign( y * y, y );
-    x = Math.copySign( x * x, x );
+      //y = Math.copySign( y * y, y );
+      //x = Math.copySign( x * x, x );
 
     double leftMotorOutput;
     double rightMotorOutput;
@@ -257,25 +303,30 @@ public class DrivetrainTalon extends SubsystemBase {
 	leftSlave.follow( leftMaster );
 	rightMaster.set( ControlMode.PercentOutput, rightMotorOutput );
 	rightSlave.follow( rightMaster );
+	prevY = y;
   }
   
   public void drive( DoubleSupplier y, DoubleSupplier x ){
 	drive( y.getAsDouble(), x.getAsDouble() );
   }
-  
+
   /** Zero all sensors, both Talons and Pigeon */
 	void zeroSensors() {
-		leftMaster.getSensorCollection().setQuadraturePosition(0, Constants.kTimeoutMs);
-		rightMaster.getSensorCollection().setQuadraturePosition(0, Constants.kTimeoutMs);
-		imu.setYaw(0, Constants.kTimeoutMs);
-		imu.setAccumZAngle(0, Constants.kTimeoutMs);
-		System.out.println("[Quadrature Encoders + Pigeon] All sensors are zeroed.\n");
+		leftMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+		rightMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+		leftSlave.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+    	rightSlave.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+  
+		imu.setYaw( 0, Constants.kTimeoutMs );
+		imu.setAccumZAngle( 0, Constants.kTimeoutMs );
+		System.out.println( "[Quadrature Encoders + Pigeon] All sensors are zeroed.\n" );
 	}
-	/** Zero QuadEncoders, used to reset position when initializing Motion Magic */
-	void zeroDistance(){
-		leftMaster.getSensorCollection().setQuadraturePosition(0, Constants.kTimeoutMs);
-		rightMaster.getSensorCollection().setQuadraturePosition(0, Constants.kTimeoutMs);
-		System.out.println("[Quadrature Encoders] All encoders are zeroed.\n");
+	
+	public void zeroDistance(){
+		leftMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+		rightMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+		leftSlave.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+    	rightSlave.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );
+		System.out.println( "[Quadrature Encoders] All encoders are zeroed.\n" );
 	}
-		
 }

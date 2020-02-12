@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
-  TalonSRX a,b,c,d;
+  TalonSRX a;
   XboxController xbox = new XboxController(0);
   
   /**
@@ -36,9 +36,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     a = new TalonSRX(0);
-    b = new TalonSRX(1);
-    c = new TalonSRX(2);
-    d = new TalonSRX(3);
+   
   }
 
   /**
@@ -76,16 +74,11 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
    
   }
-
-  /**
-   * This function is called periodically during operator control.
-   */
-  @Override
-  public void teleopPeriodic() {
-    a.set(ControlMode.PercentOutput,xbox.getY(Hand.kLeft));
-    b.set(ControlMode.PercentOutput,xbox.getY(Hand.kRight));
-    c.set(ControlMode.PercentOutput,xbox.getTriggerAxis(Hand.kLeft));
-    d.set(ControlMode.PercentOutput,xbox.getTriggerAxis(Hand.kRight));
+@Override
+public void teleopPeriodic(){
+  
+}
+  /** bn
   }
 
   /**
