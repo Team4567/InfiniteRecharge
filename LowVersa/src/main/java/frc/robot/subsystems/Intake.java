@@ -10,6 +10,8 @@ package frc.robot.subsystems;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
+import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
@@ -19,20 +21,29 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
-  TalonSRX in;
-  VictorSPX flip;
+  VictorSPX in;
+  TalonSRX flip;
   /**
    * Creates a new Intake.
    */
   public Intake() {
-    in = new TalonSRX( Constants.kCANIntake );
+    in = new VictorSPX( Constants.kCANIntake );
     in.configFactoryDefault();
     in.setNeutralMode( NeutralMode.Brake );
     in.setInverted( false );
     in.configPeakOutputForward( +1.0, Constants.kTimeoutMs );
     in.configPeakOutputReverse( -1.0, Constants.kTimeoutMs );
     in.configNeutralDeadband( Constants.kNeutralDeadband );
-    flip = new VictorSPX( Constants.kCANFlip );
+    flip = new TalonSRX( Constants.kCANFlip );
+    flip.configFactoryDefault();
+    flip.setNeutralMode( NeutralMode.Brake );
+    flip.setInverted( false );
+    flip.configPeakOutputForward( +1.0, Constants.kTimeoutMs );
+    flip.configPeakOutputReverse( -1.0, Constants.kTimeoutMs );
+    flip.configNeutralDeadband( Constants.kNeutralDeadband );
+    flip.configForwardLimitSwitchSource( LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed, 0);
+    flip.configReverseLimitSwitchSource( LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed, 0);
+
   }
 
   public void controlIntake( double value ){

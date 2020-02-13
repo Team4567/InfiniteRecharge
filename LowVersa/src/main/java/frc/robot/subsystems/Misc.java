@@ -64,8 +64,8 @@ public class Misc extends SubsystemBase {
         blinkin.set( 0.69 );
         break;
       default:
-        // White
-        blinkin.set( 0.93 );
+        // Black
+        blinkin.set( 0.99 );
         break; 
     }
   }

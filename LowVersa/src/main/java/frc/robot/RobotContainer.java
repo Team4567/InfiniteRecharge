@@ -37,6 +37,7 @@ public class RobotContainer {
   public final Intake intake;
   //public final ControlPanel control;
   public final Misc misc;
+  public final Climb climb;
 
   public final Compressor compressor;
   private Command m_autoCommand = null;   
@@ -62,6 +63,7 @@ public class RobotContainer {
     //control = new ControlPanel();
     misc = new Misc();
     intake = new Intake();
+    climb = new Climb();
     compressor = new Compressor( Constants.kCANPCMA );
 
     compressor.setClosedLoopControl(true);
@@ -116,23 +118,29 @@ public class RobotContainer {
    * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-      drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
+      
+    drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
       //shoot.setDefaultCommand( new RunCommand( () -> shoot.talon.set( ControlMode.PercentOutput, controller.getRightTrigger() ), shoot ) );
       //control.setDefaultCommand( new RunCommand( () -> control.control( () -> controller.getRightTrigger() - controller.getLeftTrigger() ), control ) );
-      intake.setDefaultCommand( new RunCommand( () -> intake.control( controller::getRightStickY, () -> controller.getRightTrigger() - controller.getLeftTrigger() ), intake ) );
-      //misc.setDefaultCommand( new RunCommand( () -> misc.lightDefault( () -> targetVisible.getDouble(0) == 1 ), misc ));
-      misc.setDefaultCommand( new RunCommand( () -> misc.blinkin.set( blink.getDouble(0) ), misc ) );
-
+      intake.setDefaultCommand( new RunCommand( () -> intake.control( () -> controller.getRightStickY() * 0.5, () ->  controller.getRightTrigger() - controller.getLeftTrigger()  ), intake ) );
+      misc.setDefaultCommand( new RunCommand( () -> misc.lightDefault( () -> targetVisible.getDouble(0) == 1 ), misc ));
+      //misc.setDefaultCommand( new RunCommand( () -> misc.blinkin.set( blink.getDouble(0) ), misc ) );
+      climb.setDefaultCommand( new RunCommand( () -> climb.control( 0 ), climb ) );
       //controller.aButton.whenHeld( new RunCommand( () -> shoot.RPMDrive( -8000 ), shoot  ) );
         //.whenReleased( new InstantCommand( shoot::stop, shoot ) );
       //controller.bButton.whenPressed( haveTarget() 
       //  ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
       //  : new PrintCommand("No Target!") );
 
+      controller.yButton.whenHeld( new RunCommand( () -> climb.control( 1 ), climb ) );
+      controller.aButton.whenHeld( new RunCommand( () -> climb.control( -1 ), climb ) );  
+
+      controller.xButton.whenPressed( new InstantCommand( () -> drive.toggleSound() ) ).whenHeld( new RunCommand( drive::music, drive ) ); 
+
       controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
       controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
       
-      //controller.selectButton.whenHeld( new RunCommand( misc::lightToControl, control ) );
+      controller.selectButton.whenHeld( new RunCommand( misc::lightToControl, misc ) );
       
       //controller.startButton.whenHeld( new RunCommand( control::setToColor, control ) );
         //.whenReleased( new InstantCommand( control::stop, control ) );

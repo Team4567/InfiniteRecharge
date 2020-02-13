@@ -30,6 +30,7 @@ import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.music.Orchestra;
 import com.ctre.phoenix.sensors.PigeonIMU;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -54,7 +55,8 @@ public class Drivetrain extends SubsystemBase {
   public IMU imu;
   public DoubleSolenoid gearShift;
   public Gear gear, prevGear;
-  
+  public Orchestra meme; 
+  private boolean playing = false;
   /** Tracking variables */
 	double targetAngle = 0;
 	  double[] ypr = {0,0,0};
@@ -72,6 +74,15 @@ public class Drivetrain extends SubsystemBase {
 
 		gearShift = new DoubleSolenoid( Constants.kCANPCMA, Constants.kPCMLGearboxIn, Constants.kPCMLGearboxOut );
 		
+		meme = new Orchestra();
+
+		meme.addInstrument( leftMaster );
+		meme.addInstrument( leftSlave );
+		meme.addInstrument( rightMaster );
+		meme.addInstrument( rightSlave );
+		meme.loadMusic("Sans.chrp");
+		meme.stop();
+		
 
 		
     /* Factory Default all hardware to prevent unexpected behavior */
@@ -83,10 +94,10 @@ public class Drivetrain extends SubsystemBase {
 		imu.configFactoryDefault();
 		
 		/* Set Neutral Mode */
-		leftMaster.setNeutralMode( NeutralMode.Brake );
-		leftSlave.setNeutralMode( NeutralMode.Brake );
-		rightMaster.setNeutralMode( NeutralMode.Brake );
-		rightSlave.setNeutralMode( NeutralMode.Brake );
+		leftMaster.setNeutralMode( NeutralMode.Coast );
+		leftSlave.setNeutralMode( NeutralMode.Coast );
+		rightMaster.setNeutralMode( NeutralMode.Coast );
+		rightSlave.setNeutralMode( NeutralMode.Coast );
 		/** Feedback Sensor Configuration */
 		
 		/* Configure the left Talon's selected sensor as local QuadEncoder */
@@ -133,10 +144,11 @@ public class Drivetrain extends SubsystemBase {
 		/* Configure output and sensor direction */
 		leftMaster.setInverted( false );
 		leftMaster.setSensorPhase( true );
-		rightMaster.setInverted( true );
-		rightMaster.setSensorPhase( true );
 		leftSlave.setInverted( false );
 		leftSlave.setSensorPhase( true );
+
+		rightMaster.setInverted( true );
+		rightMaster.setSensorPhase( true );
 		rightSlave.setInverted( true );
 	  	rightSlave.setSensorPhase( true );
 		
@@ -246,6 +258,15 @@ public class Drivetrain extends SubsystemBase {
 	  }
   }
 
+  public void toggleSound(){
+	if( playing ){
+		meme.stop();
+	}else{
+		meme.play();
+	}
+	playing = !playing;
+  }
+
   @Override
   public void periodic() {
 		if( gear == Gear.LowGear ){
@@ -301,15 +322,23 @@ public class Drivetrain extends SubsystemBase {
 	
 	leftMaster.set( ControlMode.PercentOutput, leftMotorOutput );
 	leftSlave.follow( leftMaster );
+	//leftSlave.set( ControlMode.PercentOutput, 0 );
 	rightMaster.set( ControlMode.PercentOutput, rightMotorOutput );
+	//rightSlave.set( ControlMode.PercentOutput, 0 );
 	rightSlave.follow( rightMaster );
 	prevY = y;
-  }
+}
   
   public void drive( DoubleSupplier y, DoubleSupplier x ){
 	drive( y.getAsDouble(), x.getAsDouble() );
   }
 
+  public void music(){
+	  leftMaster.set( ControlMode.MusicTone, 0 );
+	  leftSlave.set( ControlMode.MusicTone, 0 );
+	  rightMaster.set( ControlMode.MusicTone, 0 );
+	  rightSlave.set( ControlMode.MusicTone, 0 );
+  }
   /** Zero all sensors, both Talons and Pigeon */
 	void zeroSensors() {
 		leftMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );

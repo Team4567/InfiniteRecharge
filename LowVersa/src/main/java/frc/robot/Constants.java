@@ -24,8 +24,10 @@ public final class Constants {
     public static final int kCANRMaster = 2;
     public static final int kCANRSlave = 1;
 
-	public static final int kCANIntake = 5;
-	public static final int kCANFlip = -1;
+	public static final int kCANIntake = 0;
+	public static final int kCANFlip = 15;
+
+	public static final int kCANClimb = 1;
 
 	public static final int kCANVictorControl = -1; 
 	public static final int kPCMControlIn = 4;
@@ -49,12 +51,12 @@ public final class Constants {
 	 * Set to zero to skip waiting for confirmation.
 	 * Set to nonzero to wait and report to DS if action fails.
 	 */
-	public final static int kTimeoutMs = 30;
+	public final static int kTimeoutMs = 0;
 
 	/**
 	 * Motor neutral dead-band, set to the minimum 0.1%.
 	 */
-	public final static double kNeutralDeadband = 0.001;
+	public final static double kNeutralDeadband = 0.1;
 	
 	/**
 	 * PID Gains may have to be adjusted based on the responsiveness of control loop.
