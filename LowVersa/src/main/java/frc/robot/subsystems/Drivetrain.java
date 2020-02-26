@@ -80,7 +80,7 @@ public class Drivetrain extends SubsystemBase {
 		meme.addInstrument( leftSlave );
 		meme.addInstrument( rightMaster );
 		meme.addInstrument( rightSlave );
-		meme.loadMusic("Sans.chrp");
+		meme.loadMusic("Cantina.chrp");
 		meme.stop();
 		
 
@@ -94,10 +94,10 @@ public class Drivetrain extends SubsystemBase {
 		imu.configFactoryDefault();
 		
 		/* Set Neutral Mode */
-		leftMaster.setNeutralMode( NeutralMode.Coast );
-		leftSlave.setNeutralMode( NeutralMode.Coast );
-		rightMaster.setNeutralMode( NeutralMode.Coast );
-		rightSlave.setNeutralMode( NeutralMode.Coast );
+		leftMaster.setNeutralMode( NeutralMode.Brake );
+		leftSlave.setNeutralMode( NeutralMode.Brake );
+		rightMaster.setNeutralMode( NeutralMode.Brake );
+		rightSlave.setNeutralMode( NeutralMode.Brake );
 		/** Feedback Sensor Configuration */
 		
 		/* Configure the left Talon's selected sensor as local QuadEncoder */
@@ -107,7 +107,7 @@ public class Drivetrain extends SubsystemBase {
 
 		/* Configure the Remote Talon's selected sensor as a remote sensor for the right Talon */
 		rightMaster.configRemoteFeedbackFilter(		leftMaster.getDeviceID(),					// Device ID of Source
-												RemoteSensorSource.TalonSRX_SelectedSensor,	// Remote Feedback Source
+												RemoteSensorSource.TalonFX_SelectedSensor,	// Remote Feedback Source
 												Constants.REMOTE_0,							// Source number [0, 1]
 												Constants.kTimeoutMs );						// Configuration Timeout
 		
@@ -228,7 +228,7 @@ public class Drivetrain extends SubsystemBase {
   }
   
   public double yaw(){
-	return ypr[0] % 360;
+	return ypr[2] % 360;
   }
   
   public void stop(){
@@ -320,12 +320,13 @@ public class Drivetrain extends SubsystemBase {
       }
 	}
 	
+	
 	leftMaster.set( ControlMode.PercentOutput, leftMotorOutput );
 	leftSlave.follow( leftMaster );
-	//leftSlave.set( ControlMode.PercentOutput, 0 );
 	rightMaster.set( ControlMode.PercentOutput, rightMotorOutput );
-	//rightSlave.set( ControlMode.PercentOutput, 0 );
 	rightSlave.follow( rightMaster );
+	//leftSlave.set( ControlMode.PercentOutput, leftMotorOutput );
+	//rightSlave.set( ControlMode.PercentOutput, rightMotorOutput );
 	prevY = y;
 }
   

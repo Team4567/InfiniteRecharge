@@ -22,12 +22,15 @@ import com.revrobotics.ColorSensorV3;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 public class ControlPanel extends SubsystemBase {
   
   public VictorSPX wheel;
   public DoubleSolenoid piston;
+
+  boolean up = false;
 
   String colorString;
 
@@ -111,6 +114,11 @@ public class ControlPanel extends SubsystemBase {
   
   public void control( DoubleSupplier power ){
     control( power.getAsDouble() );
+  }
+
+  public void toggle(){
+    piston.set( up ? Value.kForward : Value.kReverse );
+    up = !up;
   }
 
   public void stop(){

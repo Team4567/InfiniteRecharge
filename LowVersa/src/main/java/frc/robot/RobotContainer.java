@@ -9,20 +9,21 @@ package frc.robot;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
-
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import frc.robot.Controls.BobController;
 import frc.robot.subsystems.*;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 
 /**
@@ -44,7 +45,7 @@ public class RobotContainer {
 
   NetworkTableInstance inst = NetworkTableInstance.getDefault();
   NetworkTable table,limelight;
-  NetworkTableEntry tx, ty, targetVisible, rpm, blink;
+  NetworkTableEntry tx, ty, targetVisible, rpm, blink, kPAlign;
 
   BobController controller = new BobController(0);
 
@@ -55,6 +56,9 @@ public class RobotContainer {
   
 
   SendableChooser<CommandGroupBase> chooser;
+  DriverStation.Alliance alliance;
+
+
   /**
    * The container for the robot.  Contains subsystems, OI devices, and commands.
    */
@@ -69,18 +73,21 @@ public class RobotContainer {
     compressor.setClosedLoopControl(true);
     compressor.start();
 
-    limelight = inst.getTable("limelight");
-    tx = limelight.getEntry("tx");
-    ty = limelight.getEntry("ty");
-    targetVisible = limelight.getEntry("tv");
+    limelight = inst.getTable( "limelight" );
+    tx = limelight.getEntry( "tx" );
+    ty = limelight.getEntry( "ty" );
+    targetVisible = limelight.getEntry( "tv" );
 
     table = inst.getTable( "Table" );
 
-    rpm = table.getEntry("RPM");
-    rpm.setDouble(8000);
+    rpm = table.getEntry( "RPM" );
+    rpm.setDouble( -8000 );
 
-    blink = table.getEntry("Blink");
-    blink.setDouble(0);
+    blink = table.getEntry( "Blink" );
+    blink.setDouble( 0 );
+
+    kPAlign = table.getEntry( "kPAlign" );
+    kPAlign.setDouble( 0 );
 
     //m_autoCommand = new DriveStraight( drive, 120 );
 
@@ -89,13 +96,13 @@ public class RobotContainer {
     //SmartDashboard.putData( "Auto Command", chooser );
     
 
-
+    SmartDashboard.putData( "Reset Cmds", new InstantCommand( () -> System.out.println("All Subsystems Reset!"), drive, misc, intake, climb) );
     // Configure the button bindings
     configureButtonBindings();
   }
 
   public double getTargetRPM(){
-    return rpm.getDouble(0);
+    return rpm.getDouble( 0 );
   }
 
   public boolean haveTarget(){
@@ -119,33 +126,48 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
       
-    drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
-      //shoot.setDefaultCommand( new RunCommand( () -> shoot.talon.set( ControlMode.PercentOutput, controller.getRightTrigger() ), shoot ) );
-      //control.setDefaultCommand( new RunCommand( () -> control.control( () -> controller.getRightTrigger() - controller.getLeftTrigger() ), control ) );
+      drive.setDefaultCommand( new RunCommand( () -> drive.drive( controller::getLeftStickY, controller::getLeftStickX ) , drive ) );
+      //control.setDefaultCommand( new RunCommand( () -> control::stop, control ) );
       intake.setDefaultCommand( new RunCommand( () -> intake.control( () -> controller.getRightStickY() * 0.5, () ->  controller.getRightTrigger() - controller.getLeftTrigger()  ), intake ) );
       misc.setDefaultCommand( new RunCommand( () -> misc.lightDefault( () -> targetVisible.getDouble(0) == 1 ), misc ));
-      //misc.setDefaultCommand( new RunCommand( () -> misc.blinkin.set( blink.getDouble(0) ), misc ) );
       climb.setDefaultCommand( new RunCommand( () -> climb.control( 0 ), climb ) );
-      //controller.aButton.whenHeld( new RunCommand( () -> shoot.RPMDrive( -8000 ), shoot  ) );
-        //.whenReleased( new InstantCommand( shoot::stop, shoot ) );
-      //controller.bButton.whenPressed( haveTarget() 
-      //  ? new SequentialCommandGroup( new TurnAngle( drive, getAngleToTarget() ), new DriveStraight( drive, getDistanceToTarget() ) ) 
-      //  : new PrintCommand("No Target!") );
 
-      controller.yButton.whenHeld( new RunCommand( () -> climb.control( 1 ), climb ) );
-      controller.aButton.whenHeld( new RunCommand( () -> climb.control( -1 ), climb ) );  
+      controller.dPadUp.whenHeld( new RunCommand( () -> climb.control( 1 ), climb ) );
+      controller.dPadDown.whenHeld( new RunCommand( () -> climb.control( -1 ), climb ) );  
 
-      controller.xButton.whenPressed( new InstantCommand( () -> drive.toggleSound() ) ).whenHeld( new RunCommand( drive::music, drive ) ); 
-
+      // controller.dPadLeft.whenHeld( new RunCommand( () -> control.control( -0.75 ), control ) );
+      // controller.dPadRight.whenHeld( new RunCommand( () -> control.control( 0.75 ), control ) );
+      // controller.selectButton.whenPressed( new RunCommand( () -> control.togglePiston() ) ); 
+      
       controller.rightBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.HighGear ) ) );
       controller.leftBumper.whenPressed( new InstantCommand( () -> drive.setGear( Drivetrain.Gear.LowGear ) ) );
       
+      /* 
+        Available Inputs
+        
+        Right Stick X
+        A
+        Y
+        X
+        B
+        Start
+        Select
+        DPad L/R
+        
+      */
+
+      // These are meme bindings
+      controller.xButton.whenPressed( new InstantCommand( () -> drive.toggleSound() ) ).whenHeld( new RunCommand( drive::music, drive ) ); 
+      controller.startButton.whenHeld( new RunCommand( () -> drive.drive( controller::getLeftStickY, () -> getAngleToTarget() * kPAlign.getDouble( 0 ) ), drive ) );
       controller.selectButton.whenHeld( new RunCommand( misc::lightToControl, misc ) );
       
       //controller.startButton.whenHeld( new RunCommand( control::setToColor, control ) );
         //.whenReleased( new InstantCommand( control::stop, control ) );
   }
 
+  public void setAlliance( DriverStation.Alliance allaince ){
+    this.alliance = alliance;
+  }
   
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

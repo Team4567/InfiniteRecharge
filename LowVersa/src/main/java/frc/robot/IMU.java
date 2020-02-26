@@ -16,7 +16,7 @@ public class IMU extends PigeonIMU implements Sendable  {
     public double yaw(){
         double[] ypr = {0,0,0};
         getYawPitchRoll(ypr);
-        return ypr[0] % 360;
+        return ypr[2] % 360;
     }
     @Override
     public void initSendable(SendableBuilder builder) {

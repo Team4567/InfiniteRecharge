@@ -33,7 +33,7 @@ public final class Constants {
 	public static final int kPCMControlIn = 4;
 	public static final int kPCMControlOut = 5;
 
-	public static final int kCANIMU = 0;
+	public static final int kCANIMU = 5;
 	
 	public static final int kCANPCMA = 10;
 	
