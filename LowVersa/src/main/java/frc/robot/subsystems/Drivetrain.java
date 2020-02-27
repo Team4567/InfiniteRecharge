@@ -61,6 +61,7 @@ public class Drivetrain extends SubsystemBase {
 	double targetAngle = 0;
 	  double[] ypr = {0,0,0};
 	  double prevY = 0;
+
 	/**
    * Creates a new Drivetrain.
    */
@@ -142,15 +143,15 @@ public class Drivetrain extends SubsystemBase {
 														Constants.kTimeoutMs );
 		
 		/* Configure output and sensor direction */
-		leftMaster.setInverted( false );
-		leftMaster.setSensorPhase( true );
-		leftSlave.setInverted( false );
-		leftSlave.setSensorPhase( true );
+		leftMaster.setInverted( true );
+		//leftMaster.setSensorPhase( true );
+		leftSlave.setInverted( true );
+		//leftSlave.setSensorPhase( true );
 
-		rightMaster.setInverted( true );
-		rightMaster.setSensorPhase( true );
-		rightSlave.setInverted( true );
-	  	rightSlave.setSensorPhase( true );
+		rightMaster.setInverted( false );
+		//rightMaster.setSensorPhase( true );
+		rightSlave.setInverted( false );
+	  	//rightSlave.setSensorPhase( true );
 		
 		/* Set status frame periods to ensure we don't have stale data */
 		rightMaster.setStatusFramePeriod( StatusFrame.Status_12_Feedback1, 20, Constants.kTimeoutMs );
@@ -168,7 +169,7 @@ public class Drivetrain extends SubsystemBase {
 		leftSlave.configNeutralDeadband( Constants.kNeutralDeadband, Constants.kTimeoutMs );
 		
 		/* Motion Magic Configurations */
-		rightMaster.configMotionAcceleration( 2000, Constants.kTimeoutMs );
+		rightMaster.configMotionAcceleration( 4000, Constants.kTimeoutMs );
 		rightMaster.configMotionCruiseVelocity( 2000, Constants.kTimeoutMs );
 
 		/**
@@ -228,7 +229,7 @@ public class Drivetrain extends SubsystemBase {
   }
   
   public double yaw(){
-	return ypr[2] % 360;
+	return ypr[0] % 360;
   }
   
   public void stop(){
@@ -270,15 +271,16 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
 		if( gear == Gear.LowGear ){
-			inchesToUnits = cpr * lowGearRatio / wheelCirc;
+			inchesToUnits = 1664.5;
 			gearShift.set( DoubleSolenoid.Value.kForward );
 	  }else if( gear == Gear.HighGear ){
-			inchesToUnits = cpr * highGearRatio / wheelCirc;
+			inchesToUnits = 769.24;
 			gearShift.set( DoubleSolenoid.Value.kReverse );
 		}
 	  SmartDashboard.putString( "Gear", getGearString() );
 	  SmartDashboard.putData( "Gyro", imu );
-	  
+
+
 	  imu.getYawPitchRoll( ypr );
     // This method will be called once per scheduler run
   }
@@ -286,7 +288,7 @@ public class Drivetrain extends SubsystemBase {
   public void drive( double y, double x ){
 	
 		y = Math.max( -1, Math.min( y, 1 ) );
-		y = ( Math.abs( y - prevY ) > 0.2 ) ? prevY + Math.copySign( 0.2, y - prevY ) : y;
+		y = ( Math.abs( y - prevY ) > 0.1 ) ? prevY + Math.copySign( 0.1, y - prevY ) : y;
     	x = Math.max( -1, Math.min( x, 1 ) );
     
 
@@ -340,6 +342,7 @@ public class Drivetrain extends SubsystemBase {
 	  rightMaster.set( ControlMode.MusicTone, 0 );
 	  rightSlave.set( ControlMode.MusicTone, 0 );
   }
+
   /** Zero all sensors, both Talons and Pigeon */
 	void zeroSensors() {
 		leftMaster.getSensorCollection().setIntegratedSensorPosition( 0, Constants.kTimeoutMs );

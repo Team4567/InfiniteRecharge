@@ -30,7 +30,7 @@ public class DriveStraight extends CommandBase {
     addRequirements( d );
     drive = d;
     target = inches;
-    target_sensorUnits = target * drive.inchesToUnits;
+    
   }
 
   // Called when the command is initially scheduled.
@@ -43,7 +43,8 @@ public class DriveStraight extends CommandBase {
 		drive.rightMaster.selectProfileSlot( Constants.kSlot_Distanc, Constants.PID_PRIMARY );
 		drive.rightMaster.selectProfileSlot( Constants.kSlot_Turning, Constants.PID_TURN );
 		
-		targetAngle = drive.yaw();
+    targetAngle = drive.yaw();
+    target_sensorUnits = target * drive.inchesToUnits;
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -69,6 +70,6 @@ public class DriveStraight extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return Math.abs( target_sensorUnits - drive.rightMaster.getSelectedSensorPosition() ) < 4 * drive.inchesToUnits;
+    return Math.abs( target_sensorUnits - drive.rightMaster.getSelectedSensorPosition() ) < 0.125 * drive.inchesToUnits;
   }
 }
